@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Coral Ops" />
+  <title>Coral Ops 🐚</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐚</text></svg>" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#080818;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+    input,select,textarea,button{font-family:inherit}
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:#0f0f23}
+    ::-webkit-scrollbar-thumb{background:#2d2d4a;border-radius:3px}
+
+    /* Layout */
+    #app{min-height:100vh}
+    .header{background:#0f0f23;border-bottom:1px solid #2d2d4a;padding:0 20px;position:sticky;top:0;z-index:100}
+    .header-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+    .main{max-width:900px;margin:0 auto;padding:20px}
+    .grid-layout{display:grid;grid-template-columns:200px 1fr;gap:16px}
+    @media(max-width:600px){.grid-layout{grid-template-columns:1fr}.sidebar{display:none}}
+
+    /* Stats */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+    @media(max-width:500px){.stats{grid-template-columns:repeat(2,1fr)}}
+    .stat-card{background:#0f0f23;border:1px solid #2d2d4a;border-radius:10px;padding:14px 12px;text-align:center}
+    .stat-num{font-size:24px;font-weight:700}
+    .stat-label{font-size:11px;color:#6b7280;margin-top:2px}
+
+    /* Sidebar */
+    .sidebar-card{background:#0f0f23;border:1px solid #2d2d4a;border-radius:10px;overflow:hidden}
+    .sidebar-title{padding:10px 14px;border-bottom:1px solid #2d2d4a;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+    .sidebar-btn{width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;border:none;cursor:pointer;font-size:13px;text-align:left;background:transparent;color:#94a3b8;border-left:3px solid transparent;transition:background .1s}
+    .sidebar-btn:hover{background:#1a1a2e}
+    .sidebar-btn.active{background:#1e1e38;color:#e2e8f0}
+    .badge{margin-left:auto;font-size:11px;padding:1px 6px;border-radius:10px}
+
+    /* Toolbar */
+    .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    .toolbar input,.toolbar select{background:#0f0f23;border:1px solid #2d2d4a;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none}
+    .toolbar input{flex:1;min-width:120px}
+
+    /* Buttons */
+    .btn-primary{background:#f59e0b;color:#000;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}
+    .btn-primary:hover{background:#d97706}
+    .btn-secondary{background:transparent;color:#94a3b8;border:1px solid #2d2d4a;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px}
+    .btn-icon{background:transparent;border:none;cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px}
+    .btn-add-proj{width:100%;padding:8px;border:1px dashed #2d2d4a;background:transparent;color:#4b5563;border-radius:6px;cursor:pointer;font-size:12px;margin:8px}
+    .btn-add-proj:hover{color:#94a3b8}
+
+    /* Task card */
+    .task-card{background:#0f0f23;border:1px solid #2d2d4a;border-radius:8px;padding:14px 16px;margin-bottom:8px}
+    .task-card.overdue{border-color:#ef444440}
+    .task-top{display:flex;align-items:flex-start;gap:12px}
+    .task-body{flex:1;min-width:0}
+    .task-title{font-weight:600;font-size:14px;color:#e2e8f0}
+    .task-title.done{color:#6b7280;text-decoration:line-through}
+    .task-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+    .chip{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+    .task-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#6b7280;margin-top:4px}
+    .task-actions{display:flex;gap:4px;flex-shrink:0}
+    .task-detail{margin-top:12px;padding-top:12px;border-top:1px solid #2d2d4a;display:grid;gap:10px}
+    .detail-label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+    .detail-text{margin-top:4px;font-size:13px;color:#94a3b8;line-height:1.6;white-space:pre-wrap}
+    .empty{background:#0f0f23;border:1px solid #2d2d4a;border-radius:10px;padding:48px;text-align:center;color:#4b5563}
+    .empty-icon{font-size:32px;margin-bottom:12px}
+
+    /* Login */
+    .login{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+    .login-btns{display:flex;gap:16px}
+    .login-btn{padding:16px 36px;border-radius:12px;border:1px solid #2d2d4a;background:#1a1a2e;color:#e2e8f0;font-size:17px;font-weight:600;cursor:pointer}
+    .login-btn:hover{border-color:#f59e0b}
+
+    /* Modal */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+    .modal-box{background:#1a1a2e;border:1px solid #2d2d4a;border-radius:12px;padding:28px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+    .modal-title{color:#e2e8f0;margin-bottom:20px;font-size:18px;font-weight:600}
+    .form-grid{display:grid;gap:14px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-label{display:block;font-size:11px;color:#6b7280;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+    .form-input{width:100%;background:#0f0f23;border:1px solid #2d2d4a;border-radius:8px;padding:9px 12px;color:#e2e8f0;font-size:13px;outline:none}
+    textarea.form-input{resize:vertical}
+    .form-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+
+    /* Icon picker */
+    .icon-pick{display:flex;gap:8px;flex-wrap:wrap}
+    .icon-btn{font-size:22px;padding:6px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid transparent}
+    .icon-btn.selected{background:#2d2d4a;border-color:#6b7280}
+    .color-pick{display:flex;gap:8px;flex-wrap:wrap}
+    .color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+    .color-dot.selected{border:3px solid #fff}
+
+    /* Error */
+    .error-bar{background:#ef444420;border:1px solid #ef444440;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#ef4444;display:flex;justify-content:space-between;align-items:center}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://mspmilrjtjedpmemmuaj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Jre0J3hwE67OJeBOnxFHUg_1pcVU3pC";
+
+const USERS = ["Wes","Larissa"];
+const RECURRENCE = {none:"Sem recorrência",daily:"Diária",weekly:"Semanal",biweekly:"Quinzenal",monthly:"Mensal"};
+const PRIORITY_COLOR = {alta:"#ef4444",média:"#f59e0b",baixa:"#6b7280"};
+const DEFAULT_PROJECTS = [
+  {id:"coral",name:"Coral Consultoria",color:"#f97316",icon:"🐚"},
+  {id:"bugaendrus",name:"Bugaendrus Paradise",color:"#22c55e",icon:"🏖️"},
+  {id:"marieclair",name:"Hotel Marie Claire",color:"#8b5cf6",icon:"🏨"},
+];
+const ICONS = ["📁","🏨","🐚","🏖️","📊","🔧","💼","🌴","🎯","📱"];
+const COLORS = ["#f97316","#22c55e","#8b5cf6","#3b82f6","#ef4444","#f59e0b","#ec4899","#14b8a6","#64748b","#a855f7"];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = {
+  user: localStorage.getItem("coral_user") || null,
+  projects: [], tasks: [],
+  loading: true, syncing: false, error: null, lastSync: null,
+  activeProject: "all", filterUser: "all", filterStatus: "all",
+  sortBy: "deadline", search: "",
+  modal: null, editingTask: null,
+  newTaskForm: null, newProjectForm: null,
+};
+let pollTimer = null;
+
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+async function sbFetch(path, options={}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      ...(options.headers||{}),
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const t = await res.text();
+  return t ? JSON.parse(t) : [];
+}
+const db = {
+  getTasks: () => sbFetch("tasks?order=created_at.asc"),
+  getProjects: () => sbFetch("projects?order=name.asc"),
+  upsertTask: t => sbFetch("tasks?on_conflict=id", {method:"POST",body:JSON.stringify(t),headers:{"Prefer":"resolution=merge-duplicates,return=minimal"}}),
+  upsertProject: p => sbFetch("projects?on_conflict=id", {method:"POST",body:JSON.stringify(p),headers:{"Prefer":"resolution=merge-duplicates,return=minimal"}}),
+  deleteTask: id => sbFetch(`tasks?id=eq.${id}`, {method:"DELETE",headers:{"Prefer":"return=minimal"}}),
+};
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const genId = () => Math.random().toString(36).substr(2,9) + Date.now().toString(36);
+const isOverdue = (d,s) => s!=="done" && !!d && new Date(d)<new Date();
+const daysUntil = d => !d ? null : Math.ceil((new Date(d)-new Date())/86400000);
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}) + " " +
+    d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+function gcLink(task) {
+  if (!task.deadline) return null;
+  const s = new Date(task.deadline), e = new Date(s.getTime()+3600000);
+  const f = d => d.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(task.title)}&dates=${f(s)}/${f(e)}&details=${encodeURIComponent(task.description||"")}`;
+}
+function nextOccurrence(task) {
+  if (!task.deadline || task.recurrence==="none") return null;
+  const b = new Date(task.deadline), n = new Date(b);
+  if (task.recurrence==="daily") n.setDate(b.getDate()+1);
+  else if (task.recurrence==="weekly") n.setDate(b.getDate()+7);
+  else if (task.recurrence==="biweekly") n.setDate(b.getDate()+14);
+  else if (task.recurrence==="monthly") n.setMonth(b.getMonth()+1);
+  return {...task, id:genId(), status:"open", deadline:n.toISOString().slice(0,16), created_at:new Date().toISOString(), completed_at:null, meeting_notes:"", summary:""};
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  document.getElementById("app").innerHTML = buildApp();
+  attachEvents();
+}
+
+function buildApp() {
+  if (!state.user) return buildLogin();
+  if (state.loading) return buildLoading();
+  return buildMain();
+}
+
+function buildLogin() {
+  return `<div class="login">
+    <div style="text-align:center">
+      <div style="font-size:48px;margin-bottom:8px">🐚</div>
+      <h1 style="color:#e2e8f0;font-size:24px;font-weight:700;margin-bottom:4px">Coral Ops</h1>
+      <p style="color:#6b7280;font-size:14px">Sistema de atividades da equipe</p>
+    </div>
+    <div class="login-btns">
+      ${USERS.map(u=>`<button class="login-btn" onclick="selectUser('${u}')">${u}</button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function buildLoading() {
+  return `<div class="login">
+    <div style="font-size:36px">🐚</div>
+    <p style="color:#6b7280">Conectando ao servidor...</p>
+  </div>`;
+}
+
+function buildMain() {
+  const resolved = state.tasks.map(t=>({...t,_over:isOverdue(t.deadline,t.status)}));
+  const filtered = resolved.filter(t => {
+    if (state.activeProject!=="all" && t.project_id!==state.activeProject) return false;
+    if (state.filterUser!=="all" && t.assigned_to!==state.filterUser) return false;
+    if (state.filterStatus==="open" && (t.status==="done"||t._over)) return false;
+    if (state.filterStatus==="overdue" && !t._over) return false;
+    if (state.filterStatus==="done" && t.status!=="done") return false;
+    if (state.search && !t.title.toLowerCase().includes(state.search.toLowerCase())) return false;
+    return true;
+  });
+  const sorted = [...filtered].sort((a,b)=>{
+    if (state.sortBy==="deadline"){if(!a.deadline)return 1;if(!b.deadline)return -1;return new Date(a.deadline)-new Date(b.deadline);}
+    if (state.sortBy==="priority"){const o={alta:0,média:1,baixa:2};return o[a.priority]-o[b.priority];}
+    return new Date(b.created_at)-new Date(a.created_at);
+  });
+  const stats = {
+    open: resolved.filter(t=>t.status!=="done"&&!t._over).length,
+    over: resolved.filter(t=>t._over).length,
+    done: resolved.filter(t=>t.status==="done").length,
+    mine: resolved.filter(t=>t.assigned_to===state.user&&t.status!=="done").length,
+  };
+  const pmap = Object.fromEntries(state.projects.map(p=>[p.id,p]));
+
+  return `
+    ${buildModal()}
+    <div class="header">
+      <div class="header-inner">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">🐚</span>
+          <span style="font-weight:700;font-size:16px">Coral Ops</span>
+          ${state.syncing?`<span style="font-size:11px;color:#4b5563">⟳</span>`:""}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${state.lastSync?`<span style="font-size:11px;color:#4b5563">sync ${state.lastSync.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>`:""}
+          <span style="color:#f59e0b;font-weight:600;font-size:13px">${state.user}</span>
+          <button class="btn-secondary" style="padding:4px 10px;font-size:12px" onclick="logout()">Trocar</button>
+        </div>
+      </div>
+    </div>
+    <div class="main">
+      ${state.error?`<div class="error-bar">${state.error}<button class="btn-icon" onclick="clearError()">✕</button></div>`:""}
+      <div class="stats">
+        ${[["Em aberto",stats.open,"#f59e0b"],["Atrasadas",stats.over,"#ef4444"],["Concluídas",stats.done,"#22c55e"],["Minhas",stats.mine,"#8b5cf6"]].map(([l,v,c])=>`
+          <div class="stat-card">
+            <div class="stat-num" style="color:${c}">${v}</div>
+            <div class="stat-label">${l}</div>
+          </div>`).join("")}
+      </div>
+      <div class="grid-layout">
+        <div class="sidebar">
+          <div class="sidebar-card">
+            <div class="sidebar-title">Projetos</div>
+            <button class="sidebar-btn ${state.activeProject==="all"?"active":""}" onclick="setFilter('activeProject','all')">
+              📋 Todos
+              <span class="badge" style="color:#4b5563">${resolved.filter(t=>t.status!=="done").length}</span>
+            </button>
+            ${state.projects.map(p=>{
+              const c=resolved.filter(t=>t.project_id===p.id&&t.status!=="done").length;
+              return `<button class="sidebar-btn ${state.activeProject===p.id?"active":""}" style="${state.activeProject===p.id?`border-left-color:${p.color}`:""};" onclick="setFilter('activeProject','${p.id}')">
+                ${p.icon} ${p.name}
+                ${c>0?`<span class="badge" style="background:${p.color}33;color:${p.color}">${c}</span>`:""}
+              </button>`;
+            }).join("")}
+            <button class="btn-add-proj" onclick="openModal('newProject')">+ Novo projeto</button>
+          </div>
+        </div>
+        <div>
+          <div class="toolbar">
+            <input type="text" placeholder="Buscar..." value="${state.search}" oninput="setSearch(this.value)" />
+            <select onchange="setFilter('filterUser',this.value)">
+              <option value="all" ${state.filterUser==="all"?"selected":""}>Todos</option>
+              ${USERS.map(u=>`<option value="${u}" ${state.filterUser===u?"selected":""}>${u}</option>`).join("")}
+            </select>
+            <select onchange="setFilter('filterStatus',this.value)">
+              <option value="all" ${state.filterStatus==="all"?"selected":""}>Todos status</option>
+              <option value="open" ${state.filterStatus==="open"?"selected":""}>Em aberto</option>
+              <option value="overdue" ${state.filterStatus==="overdue"?"selected":""}>Atrasadas</option>
+              <option value="done" ${state.filterStatus==="done"?"selected":""}>Concluídas</option>
+            </select>
+            <select onchange="setFilter('sortBy',this.value)">
+              <option value="deadline" ${state.sortBy==="deadline"?"selected":""}>Por prazo</option>
+              <option value="priority" ${state.sortBy==="priority"?"selected":""}>Por prioridade</option>
+              <option value="created" ${state.sortBy==="created"?"selected":""}>Mais recentes</option>
+            </select>
+            <button class="btn-primary" onclick="openModal('newTask')">+ Nova atividade</button>
+          </div>
+          ${sorted.length===0?`
+            <div class="empty">
+              <div class="empty-icon">📭</div>
+              <div style="font-size:14px">Nenhuma atividade aqui.</div>
+              <button class="btn-primary" style="margin-top:16px" onclick="openModal('newTask')">+ Criar atividade</button>
+            </div>`
+          :sorted.map(t=>buildTaskCard(t,pmap[t.project_id])).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildTaskCard(t, proj) {
+  const over = t._over;
+  const sc = t.status==="done"?"#22c55e":over?"#ef4444":"#f59e0b";
+  const sl = t.status==="done"?"Concluído":over?"Atrasado":"Em aberto";
+  const days = daysUntil(t.deadline);
+  const gc = gcLink(t);
+  const expanded = state.expandedTasks && state.expandedTasks[t.id];
+  return `
+    <div class="task-card ${over&&t.status!=="done"?"overdue":""}" style="border-left:3px solid ${proj?.color||"#6b7280"}">
+      <div class="task-top">
+        <input type="checkbox" ${t.status==="done"?"checked":""} style="margin-top:3px;cursor:pointer;width:16px;height:16px" onchange="toggleDone('${t.id}')" />
+        <div class="task-body">
+          <div class="task-badges">
+            <span class="task-title ${t.status==="done"?"done":""}">${escHtml(t.title)}</span>
+            <span class="chip" style="background:${sc}22;color:${sc}">${sl}</span>
+            <span class="chip" style="background:${PRIORITY_COLOR[t.priority]||"#6b728022"}22;color:${PRIORITY_COLOR[t.priority]||"#6b7280"}">${t.priority||"—"}</span>
+            ${t.recurrence!=="none"?`<span style="font-size:10px;color:#6b7280">🔄 ${RECURRENCE[t.recurrence]}</span>`:""}
+          </div>
+          <div class="task-meta">
+            <span>👤 <span style="color:#94a3b8">${t.assigned_to}</span></span>
+            ${t.deadline?`<span style="color:${over&&t.status!=="done"?"#ef4444":"#6b7280"}">📅 ${fmtDate(t.deadline)}${t.status!=="done"&&days!==null?` <span style="color:${days<0?"#ef4444":days<=2?"#f59e0b":"#6b7280"}">(${days<0?Math.abs(days)+"d atraso":days===0?"hoje":days+"d"})</span>`:""}` : ""}
+            <span>✍️ <span style="color:#94a3b8">${t.created_by}</span></span>
+          </div>
+        </div>
+        <div class="task-actions">
+          ${gc&&t.deadline&&t.status!=="done"?`<a href="${gc}" target="_blank" style="text-decoration:none;font-size:14px;padding:4px 6px" title="Google Agenda">📆</a>`:""}
+          <button class="btn-icon" style="color:${expanded?"#f59e0b":"#6b7280"}" onclick="toggleExpand('${t.id}')">${expanded?"▲":"▼"}</button>
+          <button class="btn-icon" style="color:#94a3b8" onclick="editTask('${t.id}')">✏️</button>
+          <button class="btn-icon" style="color:#6b7280" onclick="deleteTask('${t.id}')">🗑</button>
+        </div>
+      </div>
+      ${expanded?`<div class="task-detail">
+        ${t.description?`<div><span class="detail-label">Descrição</span><p class="detail-text">${escHtml(t.description)}</p></div>`:""}
+        ${t.meeting_notes?`<div><span class="detail-label">📋 Notas</span><p class="detail-text">${escHtml(t.meeting_notes)}</p></div>`:""}
+        ${t.summary?`<div><span class="detail-label">✅ Resumo</span><p class="detail-text" style="color:#22c55e">${escHtml(t.summary)}</p></div>`:""}
+        ${!t.description&&!t.meeting_notes&&!t.summary?`<p style="color:#4b5563;font-size:13px">Nenhuma nota adicionada.</p>`:""}
+      </div>`:""}
+    </div>`;
+}
+
+function buildModal() {
+  if (!state.modal) return "";
+  if (state.modal==="newTask"||state.modal==="editTask") return buildTaskModal();
+  if (state.modal==="newProject") return buildProjectModal();
+  return "";
+}
+
+function buildTaskModal() {
+  const f = state.newTaskForm;
+  const isEdit = state.modal==="editTask";
+  return `<div class="modal-bg" onclick="closeModal(event)">
+    <div class="modal-box">
+      <h2 class="modal-title">${isEdit?"Editar atividade":"Nova atividade"}</h2>
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Título *</label>
+          <input class="form-input" id="f_title" value="${escAttr(f.title||"")}" placeholder="Descreva a atividade..." oninput="updateForm('title',this.value)" />
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="form-label">Projeto *</label>
+            <select class="form-input" id="f_project" onchange="updateForm('project_id',this.value)">
+              ${state.projects.map(p=>`<option value="${p.id}" ${f.project_id===p.id?"selected":""}>${p.icon} ${p.name}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Responsável</label>
+            <select class="form-input" onchange="updateForm('assigned_to',this.value)">
+              ${USERS.map(u=>`<option value="${u}" ${f.assigned_to===u?"selected":""}>${u}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="form-label">Prazo / Data</label>
+            <input class="form-input" type="datetime-local" value="${f.deadline||""}" onchange="updateForm('deadline',this.value)" />
+          </div>
+          <div>
+            <label class="form-label">Prioridade</label>
+            <select class="form-input" onchange="updateForm('priority',this.value)">
+              ${["alta","média","baixa"].map(p=>`<option value="${p}" ${f.priority===p?"selected":""}>${p.charAt(0).toUpperCase()+p.slice(1)}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Recorrência</label>
+          <select class="form-input" onchange="updateForm('recurrence',this.value)">
+            ${Object.entries(RECURRENCE).map(([k,v])=>`<option value="${k}" ${f.recurrence===k?"selected":""}>${v}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Descrição / Contexto</label>
+          <textarea class="form-input" rows="3" placeholder="Contexto, objetivo..." oninput="updateForm('description',this.value)">${escHtml(f.description||"")}</textarea>
+        </div>
+        <div>
+          <label class="form-label">📋 Notas de reunião</label>
+          <textarea class="form-input" rows="3" placeholder="O que foi discutido..." oninput="updateForm('meeting_notes',this.value)">${escHtml(f.meeting_notes||"")}</textarea>
+        </div>
+        <div>
+          <label class="form-label">✅ Resumo / Fechamento</label>
+          <textarea class="form-input" rows="2" placeholder="Como foi encerrado?" oninput="updateForm('summary',this.value)">${escHtml(f.summary||"")}</textarea>
+        </div>
+        ${isEdit?`<div>
+          <label class="form-label">Status</label>
+          <select class="form-input" onchange="updateForm('status',this.value)">
+            <option value="open" ${f.status==="open"?"selected":""}>Em aberto</option>
+            <option value="done" ${f.status==="done"?"selected":""}>Concluído</option>
+          </select>
+        </div>`:""}
+      </div>
+      <div class="form-actions">
+        <button class="btn-secondary" onclick="state.modal=null;render()">Cancelar</button>
+        <button class="btn-primary" onclick="saveTask()">${isEdit?"Salvar":"Criar atividade"}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildProjectModal() {
+  const f = state.newProjectForm;
+  return `<div class="modal-bg" onclick="closeModal(event)">
+    <div class="modal-box">
+      <h2 class="modal-title">Novo projeto</h2>
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Nome *</label>
+          <input class="form-input" value="${escAttr(f.name||"")}" placeholder="Ex: Hotel Recanto..." oninput="updateProjForm('name',this.value)" />
+        </div>
+        <div>
+          <label class="form-label">Ícone</label>
+          <div class="icon-pick">
+            ${ICONS.map(i=>`<button class="icon-btn ${f.icon===i?"selected":""}" onclick="updateProjForm('icon','${i}')">${i}</button>`).join("")}
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Cor</label>
+          <div class="color-pick">
+            ${COLORS.map(c=>`<button class="color-dot ${f.color===c?"selected":""}" style="background:${c}" onclick="updateProjForm('color','${c}')"></button>`).join("")}
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-secondary" onclick="state.modal=null;render()">Cancelar</button>
+        <button class="btn-primary" onclick="saveProject()">Criar projeto</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function escAttr(s){return String(s||"").replace(/"/g,"&quot;")}
+
+// ─── EVENTS ───────────────────────────────────────────────────────────────────
+function attachEvents() {
+  document.addEventListener("keydown", e => { if(e.key==="Escape"&&state.modal){state.modal=null;render();} }, {once:true});
+}
+function closeModal(e) { if(e.target.classList.contains("modal-bg")){state.modal=null;render();} }
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function selectUser(u) { state.user=u; localStorage.setItem("coral_user",u); fetchAll(); }
+function logout() { state.user=null; localStorage.removeItem("coral_user"); state.projects=[]; state.tasks=[]; render(); }
+function clearError() { state.error=null; render(); }
+function setFilter(k,v) { state[k]=v; render(); }
+function setSearch(v) { state.search=v; render(); }
+
+function openModal(type) {
+  if (type==="newTask") {
+    state.newTaskForm = { title:"", project_id: state.projects[0]?.id||"", assigned_to:state.user, created_by:state.user, deadline:"", priority:"média", recurrence:"none", description:"", meeting_notes:"", summary:"", status:"open" };
+    state.editingTask = null;
+  }
+  if (type==="editTask") {
+    // editingTask already set
+  }
+  if (type==="newProject") {
+    state.newProjectForm = { name:"", icon:"📁", color:"#3b82f6" };
+  }
+  state.modal=type; render();
+}
+
+function editTask(id) {
+  const t = state.tasks.find(x=>x.id===id);
+  if (!t) return;
+  state.editingTask = t;
+  state.newTaskForm = {...t};
+  state.modal="editTask"; render();
+}
+
+function updateForm(k,v) { state.newTaskForm[k]=v; }
+function updateProjForm(k,v) { state.newProjectForm[k]=v; render(); }
+
+function toggleExpand(id) {
+  if (!state.expandedTasks) state.expandedTasks={};
+  state.expandedTasks[id] = !state.expandedTasks[id];
+  render();
+}
+
+async function saveTask() {
+  const f = state.newTaskForm;
+  if (!f.title.trim()) return;
+  state.modal=null; state.syncing=true; render();
+  try {
+    const task = {...f, id: f.id||genId(), created_at: f.created_at||new Date().toISOString(), completed_at: f.completed_at||null};
+    await db.upsertTask(task);
+    await fetchAll(true);
+  } catch(e) { state.error="Erro ao salvar."; state.syncing=false; render(); }
+}
+
+async function toggleDone(id) {
+  const t = state.tasks.find(x=>x.id===id);
+  if (!t) return;
+  state.syncing=true;
+  const isDone = t.status==="done";
+  try {
+    await db.upsertTask({...t, status:isDone?"open":"done", completed_at:isDone?null:new Date().toISOString()});
+    if (!isDone && t.recurrence!=="none") { const n=nextOccurrence(t); if(n) await db.upsertTask(n); }
+    await fetchAll(true);
+  } catch(e) { state.error="Erro ao atualizar."; state.syncing=false; render(); }
+}
+
+async function deleteTask(id) {
+  if (!confirm("Remover esta atividade?")) return;
+  state.syncing=true;
+  try { await db.deleteTask(id); state.tasks=state.tasks.filter(x=>x.id!==id); }
+  catch(e) { state.error="Erro ao remover."; }
+  state.syncing=false; render();
+}
+
+async function saveProject() {
+  const f = state.newProjectForm;
+  if (!f.name.trim()) return;
+  state.modal=null; state.syncing=true; render();
+  try {
+    await db.upsertProject({id:genId(), name:f.name.trim(), color:f.color, icon:f.icon});
+    await fetchAll(true);
+  } catch(e) { state.error="Erro ao salvar projeto."; state.syncing=false; render(); }
+}
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+async function fetchAll(silent=false) {
+  if (!silent) { state.loading=true; render(); }
+  state.syncing=true;
+  try {
+    const [projs, tasks] = await Promise.all([db.getProjects(), db.getTasks()]);
+    if (projs.length===0) {
+      await Promise.all(DEFAULT_PROJECTS.map(p=>db.upsertProject(p)));
+      state.projects = DEFAULT_PROJECTS;
+    } else { state.projects=projs; }
+    state.tasks=tasks;
+    state.lastSync=new Date();
+    state.error=null;
+  } catch(e) { state.error="Erro ao conectar. Verifique a internet."; }
+  state.loading=false; state.syncing=false; render();
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(()=>{ if(state.user&&!state.loading) fetchAll(true); }, 15000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+if (state.user) { fetchAll(); }
+else { render(); }
+startPolling();
+</script>
+</body>
+</html>
